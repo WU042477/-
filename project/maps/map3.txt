@@ -1,0 +1,15 @@
+rows, cols = 12, 20
+grid3 = [[1]*cols for _ in range(rows)]
+
+# 先把中间区域全部设为可走
+for r in range(1, rows-1):
+    for c in range(1, cols-1):
+        grid3[r][c] = 0
+
+# 在第 9 列做一堵墙（除了 r=5 有一个缺口）
+for r in range(1, rows-1):
+    if r != 5:
+        grid3[r][9] = 1
+
+start3 = (1, 1)
+goal3  = (10, 18)

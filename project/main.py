@@ -4,6 +4,7 @@ from .algorithms.astar import a_star
 
 from .utils.grid import load_map_from_txt
 from .utils.path_utils import print_grid_with_path
+from .utils.visualization import print_map_raw, print_map_semi_pretty, print_map_pretty
 
 MAPS = {
     "1": ("maps/map1.txt", "Map 1 (Easy)"),
@@ -83,10 +84,23 @@ def run_single():
     print("============================\n")
 
     if result.get("found"):
-        print("Path visualization:\n")
-        print_grid_with_path(grid, result.get("path"), start, goal)
-    else:
-        print("No path found. Visualization skipped.")
+    path = result.get("path")
+
+    print("\n========== Visualization ==========")
+
+    print("\n[Figure 1] Original Map (raw):\n")
+    print_map_raw(grid, start, goal)
+
+    print("\n[Figure 2] Semi-pretty Map (symbols enhanced):\n")
+    print_map_semi_pretty(grid, path, start, goal)
+
+    print("\n[Figure 3] Final Pretty Map (color + symbols):\n")
+    print_map_pretty(grid, path, start, goal, use_color=True, show_legend=True)
+
+    print("===================================\n")
+else:
+    print("No path found. Visualization skipped.")
+
 
 
 def run_all_experiments():
@@ -133,4 +147,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()

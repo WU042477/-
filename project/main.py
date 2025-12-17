@@ -1,5 +1,3 @@
-import time
-
 from .algorithms.BFS import bfs
 from .algorithms.dijkstra import dijkstra
 from .algorithms.astar import a_star
@@ -7,105 +5,131 @@ from .algorithms.astar import a_star
 from .utils.grid import load_map_from_txt
 from .utils.path_utils import print_grid_with_path
 
-def choose_map():
-    print("\n请选择地图:")
-    print("1. map1.txt  (简单地图)")
-    print("2. map2.txt  (迷宫地图)")
-    print("3. map3.txt  (大地图)")
-    choice = input("输入数字 1/2/3: ")
+MAPS = {
+    "1": ("maps/map1.txt", "Map 1 (Easy)"),
+    "2": ("maps/map2.txt", "Map 2 (Maze)"),
+    "3": ("maps/map3.txt", "Map 3 (Large)"),
+}
 
-    if choice == "1":
-        return "map1.txt"
-    elif choice == "2":
-        return "map2.txt"
-    elif choice == "3":
-        return "map3.txt"
-    else:
-        print("输入无效，默认选择 map1")
-        return "map1.txt"
+ALGORITHMS = {
+    "1": ("BFS", bfs),
+    "2": ("Dijkstra", dijkstra),
+    "3": ("A*", a_star),
+}
+
+
+def choose_map():
+    print("\nSelect a map:")
+    print("1. map1.txt  (Easy)")
+    print("2. map2.txt  (Maze)")
+    print("3. map3.txt  (Large)")
+    choice = input("Enter 1/2/3: ").strip()
+
+    if choice not in MAPS:
+        print("Invalid input. Defaulting to map1.txt (Easy).")
+        choice = "1"
+
+    return MAPS[choice]
+
 
 def choose_algorithm():
-    print("\n请选择算法:")
+    print("\nSelect an algorithm:")
     print("1. BFS")
     print("2. Dijkstra")
     print("3. A*")
-    choice = input("输入数字 1/2/3: ")
+    choice = input("Enter 1/2/3: ").strip()
 
-    if choice == "1":
-        return "BFS", bfs
-    elif choice == "2":
-        return "Dijkstra", dijkstra
-    elif choice == "3":
-        return "A*", a_star
-    else:
-        print("输入无效，默认选择 BFS")
-        return "BFS", bfs
+    if choice not in ALGORITHMS:
+        print("Invalid input. Defaulting to BFS.")
+        choice = "1"
 
+    return ALGORITHMS[choice]
+
+
+def safe_load_map(map_path):
+    grid, start, goal = load_map_from_txt(map_path)
+
+    if not grid:
+        print(f"[ERROR] Failed to load map (empty grid): {map_path}")
+        return None, None, None
+
+    if start is None or goal is None:
+        print(f"[ERROR] start/goal not found in: {map_path}")
+        print(f"        start={start}, goal={goal}")
+        print("        Ensure the map contains exactly one 'S' and one 'G'.")
+        return None, None, None
+
+    return grid, start, goal
 
 
 def run_single():
-    
-    map_path = choose_map()
-
-    grid, start, goal = load_map_from_txt(map_path)
+    map_path, map_desc = choose_map()
+    grid, start, goal = safe_load_map(map_path)
+    if grid is None:
+        return
 
     algo_name, algo_fn = choose_algorithm()
 
-    print(f"\n正在运行 {algo_name} ...")
+    print(f"\nRunning {algo_name} on {map_desc} ...")
     result = algo_fn(grid, start, goal)
 
-    print("\n========== 运行结果 ==========")
-    print(f"算法: {algo_name}")
-    print(f"找到路径: {result['found']}")
-    print(f"路径步数: {result['cost']}")
-    print(f"扩展节点: {result['expanded']}")
-    print(f"运行时间: {result['runtime']:.6f} 秒")
-    print("==============================\n")
+    print("\n========== Result ==========")
+    print(f"Algorithm:      {algo_name}")
+    print(f"Map:            {map_desc} ({map_path})")
+    print(f"Path found:     {result.get('found')}")
+    print(f"Path cost:      {result.get('cost')}")
+    print(f"Expanded nodes: {result.get('expanded')}")
+    print(f"Runtime:        {result.get('runtime', 0.0):.6f} s")
+    print("============================\n")
 
-    if result["found"]:
-        print("路径图如下：\n")
-        print_grid_with_path(grid, result["path"], start, goal)
-
+    if result.get("found"):
+        print("Path visualization:\n")
+        print_grid_with_path(grid, result.get("path"), start, goal)
+    else:
+        print("No path found. Visualization skipped.")
 
 
 def run_all_experiments():
-    maps = ["maps/map1.txt", "maps/map2.txt", "maps/map3.txt"]
     algorithms = [
         ("BFS", bfs),
         ("Dijkstra", dijkstra),
-        ("A*", a_star)
+        ("A*", a_star),
     ]
 
-    print("\n算法, 地图, 找到路径, 步数, 扩展节点, 时间")
+    print("\nAlgorithm, Map, PathFound, Cost, Expanded, RuntimeSeconds")
 
-    for m in maps:
-        grid, start, goal = load_map_from_txt(m)
+    for _, (map_path, map_desc) in MAPS.items():
+        grid, start, goal = safe_load_map(map_path)
+        if grid is None:
+            continue
 
         for name, fn in algorithms:
             result = fn(grid, start, goal)
-            print(f"{name}, {m}, {result['found']}, "
-                  f"{result['cost']}, {result['expanded']}, "
-                  f"{result['runtime']:.6f}")
+            print(
+                f"{name}, {map_desc}, {result.get('found')}, "
+                f"{result.get('cost')}, {result.get('expanded')}, "
+                f"{result.get('runtime', 0.0):.6f}"
+            )
 
 
 def main():
     while True:
-        print("\n=== 路径规划系统 ===")
-        print("1. 单次运行")
-        print("2. 跑全部实验")
-        print("3. 退出")
+        print("\n=== Path Planning System ===")
+        print("1. Run once")
+        print("2. Run all experiments")
+        print("3. Exit")
 
-        choice = input("选择功能: ")
+        choice = input("Select an option: ").strip()
 
         if choice == "1":
             run_single()
         elif choice == "2":
             run_all_experiments()
         elif choice == "3":
-            print("退出系统")
+            print("Exiting...")
             break
         else:
-            print("无效输入，请重新选择")
+            print("Invalid input. Please try again.")
 
 
 if __name__ == "__main__":
